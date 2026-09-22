@@ -59,14 +59,31 @@
         </label>
       </div>
 
-      <div class="card">
+      <div v-if="ex.steps?.length" class="card">
+        <div class="card-title"><span>动作步骤</span></div>
+        <ol class="cue-list">
+          <li v-for="(s, i) in ex.steps" :key="i">{{ s }}</li>
+        </ol>
+      </div>
+
+      <div v-if="ex.cues?.length" class="card">
         <div class="card-title"><span>动作要领</span></div>
         <ol class="cue-list">
           <li v-for="(c, i) in ex.cues" :key="i">{{ c }}</li>
         </ol>
       </div>
 
-      <div class="card">
+      <div v-if="ex.breathing" class="card">
+        <div class="card-title"><span>呼吸节奏</span></div>
+        <p class="text">{{ ex.breathing }}</p>
+      </div>
+
+      <div v-if="ex.feel" class="card">
+        <div class="card-title"><span>动作感觉</span></div>
+        <p class="text">{{ ex.feel }}</p>
+      </div>
+
+      <div v-if="ex.mistakes?.length" class="card">
         <div class="card-title"><span style="color: var(--danger)">常见错误</span></div>
         <ul class="bad-list">
           <li v-for="(c, i) in ex.mistakes" :key="i">{{ c }}</li>
@@ -255,5 +272,12 @@ async function delGif(gid: string) {
   color: var(--danger);
   margin-bottom: 6px;
   line-height: 1.5;
+}
+
+/* 呼吸节奏 / 动作感觉：一段散文，不是列表 */
+.text {
+  font-size: 13.5px;
+  color: var(--ink-2);
+  line-height: 1.6;
 }
 </style>

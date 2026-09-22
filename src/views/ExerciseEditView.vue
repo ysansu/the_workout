@@ -65,7 +65,7 @@
 
       <div class="card">
         <div class="card-title">
-          <span>动作步骤（可选）</span>
+          <span>动作步骤</span>
           <span class="more">{{ form.stepsText.length }}/200</span>
         </div>
         <textarea
@@ -78,22 +78,22 @@
       </div>
 
       <div class="card">
-        <div class="card-title"><span>动作要点（可选）</span></div>
+        <div class="card-title"><span>动作要点</span></div>
         <textarea v-model="form.cuesText" class="ta" rows="3" placeholder="请输入动作要点，如发力部位、感觉等" />
       </div>
 
       <div class="card">
-        <div class="card-title"><span>呼吸节奏（可选）</span></div>
+        <div class="card-title"><span>呼吸节奏</span></div>
         <textarea v-model="form.breathing" class="ta" rows="2" placeholder="请输入呼吸节奏，如上推呼气，下放吸气" />
       </div>
 
       <div class="card">
-        <div class="card-title"><span>动作感觉（可选）</span></div>
+        <div class="card-title"><span>动作感觉</span></div>
         <textarea v-model="form.feel" class="ta" rows="2" placeholder="做这个动作时应该是什么感觉" />
       </div>
 
       <div class="card">
-        <div class="card-title"><span>常见错误（可选）</span></div>
+        <div class="card-title"><span>常见错误</span></div>
         <textarea v-model="form.mistakesText" class="ta" rows="3" placeholder="请输入练习本动作时的常见错误" />
       </div>
 
@@ -242,6 +242,9 @@ async function submit() {
     group: form.group,
     equipment: [...form.equipment],
     pattern: PATTERN_BY_GROUP[form.group] ?? 'push',
+    // 详情页页头的主肌群标签读的是 primary，自建动作没别的来源，就用选好的「锻炼部位」
+    // （编辑内置动作时，没改部位就保留它原有的 primary，别把次要肌群信息抹掉）
+    primary: base.primary.length && base.group === form.group ? base.primary : [form.group],
     steps: lines(form.stepsText),
     cues: lines(form.cuesText),
     breathing: form.breathing.trim() || undefined,
