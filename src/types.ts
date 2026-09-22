@@ -94,8 +94,6 @@ export interface Exercise {
   custom?: boolean
   /** 已收藏 */
   favorite?: boolean
-  /** 仅自己可见 */
-  private?: boolean
 }
 
 /** 计划中的一条动作（对应「添加动作」面板的四个字段） */

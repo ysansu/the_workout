@@ -41,6 +41,17 @@
           <button class="btn btn-ghost btn-sm" @click="fileInput?.click()">导入备份</button>
           <button class="btn btn-ghost btn-sm danger" @click="doClear">清空数据</button>
         </div>
+        <button
+          v-if="exerciseStore.hiddenCount"
+          class="restore-row"
+          @click="doRestoreBuiltins"
+        >
+          <span>
+            恢复已删除的内置动作
+            <small>{{ exerciseStore.hiddenCount }} 个</small>
+          </span>
+          <span class="chev">›</span>
+        </button>
         <input ref="fileInput" type="file" accept="application/json" hidden @change="doImport" />
         <div v-if="exportText" class="card-title" style="margin-top: 12px">
           <span>备份内容（可复制保存）</span>
@@ -63,15 +74,29 @@
       </div>
 
     </div>
+
+    <ConfirmDialog
+      :visible="askingClear"
+      title="确定清空全部数据？"
+      message="训练记录、计划、自建动作和设置都会被删除，且不可恢复。建议先导出备份。"
+      confirm-text="清空并刷新"
+      cancel-text="取消"
+      danger
+      @confirm="confirmClear"
+      @cancel="askingClear = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useUserStore } from '@/stores/user'
+import { useExerciseStore } from '@/stores/exercise'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { clearAll, exportJSON, importJSON } from '@/utils/persist'
 
 const userStore = useUserStore()
+const exerciseStore = useExerciseStore()
 // ⚠️ 不能写 `const theme = userStore.theme` —— Pinia 的 store 会自动解包 ref，
 // 那样拿到的是字符串快照，切主题时视图不更新
 const theme = computed(() => userStore.theme)
@@ -80,6 +105,7 @@ const setTheme = userStore.setTheme
 const exportText = ref('')
 const importMode = ref(false)
 const importText = ref('')
+const askingClear = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 
 function doExport() {
@@ -113,9 +139,17 @@ function applyImport() {
 }
 
 function doClear() {
-  if (!confirm('确定清空全部训练记录和设置？此操作不可恢复。')) return
+  askingClear.value = true
+}
+
+function confirmClear() {
+  askingClear.value = false
   clearAll()
   location.reload()
+}
+
+function doRestoreBuiltins() {
+  exerciseStore.restoreBuiltins()
 }
 </script>
 
@@ -148,6 +182,26 @@ function doClear() {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+
+/* 只有删过内置动作时才出现 */
+.restore-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  font-size: 14.5px;
+  color: var(--ink-1);
+  text-align: left;
+}
+
+.restore-row small {
+  margin-left: 6px;
+  font-size: 12px;
+  color: var(--ink-3);
 }
 
 /* ---------- 外观：日间 / 夜间 ---------- */

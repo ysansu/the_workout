@@ -60,9 +60,23 @@
 
         <div v-else class="grid">
           <div v-for="e in shown" :key="e.id" class="cell">
-            <button class="cover" @click="$emit('detail', e.id)">
-              <ExThumb :id="e.id" fill />
-            </button>
+            <div class="cover-wrap">
+              <button class="cover" @click="$emit('detail', e.id)">
+                <ExThumb :id="e.id" fill />
+              </button>
+              <button
+                v-if="mode === 'browse'"
+                class="more"
+                aria-label="更多操作"
+                @click="$emit('more', e.id)"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <circle cx="5.4" cy="12" r="1.7" />
+                  <circle cx="12" cy="12" r="1.7" />
+                  <circle cx="18.6" cy="12" r="1.7" />
+                </svg>
+              </button>
+            </div>
             <div class="cname" @click="$emit('detail', e.id)">{{ e.name }}</div>
             <button v-if="mode === 'pick'" class="cbtn" @click="$emit('pick', e.id)">添加动作</button>
             <button v-else class="cbtn ghost" @click="$emit('detail', e.id)">查看详情</button>
@@ -100,6 +114,7 @@ defineEmits<{
   (e: 'close'): void
   (e: 'pick', id: string): void
   (e: 'detail', id: string): void
+  (e: 'more', id: string): void
   (e: 'create'): void
 }>()
 
@@ -393,6 +408,10 @@ defineExpose({ switchTab })
   flex-direction: column;
 }
 
+.cover-wrap {
+  position: relative;
+}
+
 .cover {
   width: 100%;
   aspect-ratio: 1 / 1;
@@ -400,6 +419,26 @@ defineExpose({ switchTab })
   overflow: hidden;
   background: var(--surface-3);
   display: block;
+}
+
+/* 压在缩略图上的「更多」，用半透明深色底，两种主题下都压得住图 */
+.more {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(20, 20, 28, 0.42);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.more svg {
+  width: 16px;
+  height: 16px;
 }
 
 .cname {

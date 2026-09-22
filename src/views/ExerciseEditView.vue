@@ -97,19 +97,23 @@
         <textarea v-model="form.mistakesText" class="ta" rows="3" placeholder="请输入练习本动作时的常见错误" />
       </div>
 
-      <div class="card">
-        <div class="card-title"><span>隐私设置</span></div>
-        <button class="priv" @click="form.private = !form.private">
-          <span>
-            设为私密
-            <small>私密意味着这个动作只有自己可用</small>
-          </span>
-          <span class="sw" :class="{ on: form.private }"><i /></span>
-        </button>
-      </div>
-
-      <button v-if="isEdit" class="del" @click="remove">删除这个动作</button>
+      <button v-if="isEdit" class="del" @click="askingDelete = true">删除这个动作</button>
     </div>
+
+    <ConfirmDialog
+      :visible="askingDelete"
+      :title="isBuiltinExercise ? '确定删除这个内置动作？' : '确定删除这个动作？'"
+      :message="
+        isBuiltinExercise
+          ? '删除后它不再出现在动作库里，已记录的训练不受影响。可以在「设置 → 数据」里一键恢复全部内置动作。'
+          : '删除后不可恢复，已记录的训练不受影响。'
+      "
+      confirm-text="删除"
+      cancel-text="取消"
+      danger
+      @confirm="remove"
+      @cancel="askingDelete = false"
+    />
   </div>
 </template>
 
@@ -119,6 +123,7 @@ import { useRoute, useRouter } from 'vue-router'
 import type { Equipment, Exercise, MuscleGroup, Pattern } from '@/types'
 import { EQUIPMENT_LABEL, MUSCLE_GROUPS } from '@/data/exercises'
 import { useExerciseStore } from '@/stores/exercise'
+import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { addGif, fileToDataUrl } from '@/utils/imageStore'
 import { refreshThumbs } from '@/utils/thumbs'
 import { blankExercise } from '@/stores/exercise'
@@ -145,6 +150,11 @@ const EQUIP_KEYS: Equipment[] = [
 
 const covers = ref<(string | null)[]>([null, null])
 
+const askingDelete = ref(false)
+
+/** 内置动作删除后只是隐藏，文案要跟自建动作区分开 */
+const isBuiltinExercise = computed(() => store.isBuiltin(editId.value))
+
 const form = reactive({
   name: '',
   group: '胸' as MuscleGroup,
@@ -154,7 +164,6 @@ const form = reactive({
   breathing: '',
   feel: '',
   mistakesText: '',
-  private: true,
   rest: 60,
 })
 
@@ -172,7 +181,6 @@ onMounted(() => {
   form.breathing = e.breathing ?? ''
   form.feel = e.feel ?? ''
   form.mistakesText = (e.mistakes ?? []).join('\n')
-  form.private = e.private ?? true
   form.rest = e.rest
 })
 
@@ -239,14 +247,14 @@ async function submit() {
     breathing: form.breathing.trim() || undefined,
     feel: form.feel.trim() || undefined,
     mistakes: lines(form.mistakesText),
-    private: form.private,
     custom: true,
     rest: form.rest,
   }
 
   let id = editId.value
   if (isEdit.value) {
-    store.updateCustom(id, patch)
+    // 内置动作也走这里：store 会存一份同 id 的副本覆盖它
+    store.saveExercise(id, patch)
   } else {
     const created = store.addCustom({ ...base, ...patch } as Exercise)
     id = created.id
@@ -262,8 +270,8 @@ async function submit() {
 }
 
 function remove() {
-  if (!window.confirm('确定删除这个自定义动作？')) return
-  store.removeCustom(editId.value)
+  askingDelete.value = false
+  store.removeExercise(editId.value)
   router.replace('/exercises')
 }
 
@@ -442,53 +450,6 @@ function leave() {
 .card-title .more {
   font-size: 11.5px;
   color: var(--ink-4);
-}
-
-.priv {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  gap: 12px;
-  font-size: 14.5px;
-  text-align: left;
-}
-
-.priv small {
-  display: block;
-  font-size: 11.5px;
-  color: var(--ink-3);
-  margin-top: 3px;
-}
-
-.sw {
-  flex: none;
-  width: 46px;
-  height: 28px;
-  border-radius: 14px;
-  background: var(--surface-3);
-  position: relative;
-  transition: background 0.18s;
-}
-
-.sw i {
-  position: absolute;
-  top: 3px;
-  left: 3px;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: #fff;
-  transition: transform 0.18s;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-}
-
-.sw.on {
-  background: var(--brand-1);
-}
-
-.sw.on i {
-  transform: translateX(18px);
 }
 
 .del {
