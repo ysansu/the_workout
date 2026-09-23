@@ -34,6 +34,7 @@
           来自「{{ planStore.activePlan?.name }}」
           <button class="link" @click="askingEnd = true">结束该计划</button>
         </div>
+        <button class="btn btn-ghost btn-block" @click="adjustOpen = true">调整计划顺序</button>
       </div>
 
       <!-- 今日清单 -->
@@ -93,6 +94,9 @@
         <button class="btn btn-primary btn-block" style="margin-top: 12px" @click="startPlanDay">
           {{ startLabel }}
         </button>
+        <button class="btn btn-ghost btn-block" style="margin-top: 8px" @click="adjustOpen = true">
+          调整计划顺序
+        </button>
       </div>
 
       <!-- 没有执行中的计划 -->
@@ -122,6 +126,35 @@
             <div class="sub2">{{ Math.round((s.durationSec || 0) / 60) }} 分钟 · 容量 {{ sessionVolume(s) }} kg</div>
           </div>
           <span class="arrow">›</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 调整计划顺序：把轮次直接拨到某一天 -->
+    <div v-if="adjustOpen" class="mask" @click.self="adjustOpen = false">
+      <div class="adj">
+        <div class="adj-head">
+          <span class="adj-title">调整计划顺序</span>
+          <button class="adj-x" @click="adjustOpen = false">✕</button>
+        </div>
+        <p class="adj-sub">
+          {{ isWeeklyPlan ? '这个计划按星期排布，由日历决定，不能手动调整' : '选一天，今天就从它开始，练完会自动往下走' }}
+        </p>
+        <div class="adj-body">
+          <div v-for="d in planDays" :key="d.id" class="adj-row">
+            <div class="adj-meta">
+              <div class="adj-name">{{ d.name }}</div>
+              <div class="adj-info">{{ d.rest ? '休息日' : d.items.length + ' 个动作' }}</div>
+            </div>
+            <button
+              v-if="!d.rest && !isWeeklyPlan"
+              class="adj-go"
+              :disabled="d.id === currentDayId"
+              @click="startFromDay(d.id)"
+            >
+              {{ d.id === currentDayId ? '已是今天' : '从今日开始' }}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -287,6 +320,20 @@ const askingEnd = ref(false)
 function onEndConfirm() {
   askingEnd.value = false
   planStore.deactivate()
+}
+
+/* ---------------- 调整计划顺序 ---------------- */
+
+const adjustOpen = ref(false)
+
+const planDays = computed<PlanDay[]>(() => planStore.activePlan?.days ?? [])
+const currentDayId = computed(() => planStore.currentDay?.id ?? '')
+const isWeeklyPlan = computed(() => planStore.activePlan?.schedule === 'weekly')
+
+/** 今天就从这一天开始：把轮次拨过去，首页立刻换成这一天 */
+function startFromDay(dayId: string) {
+  planStore.setCurrentDay(dayId)
+  adjustOpen.value = false
 }
 
 function startFree() {
@@ -534,5 +581,107 @@ function startFree() {
 .arrow {
   color: var(--ink-4);
   font-size: 20px;
+}
+
+/* ---------- 调整计划顺序弹层 ---------- */
+.mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 18, 18, 0.45);
+  z-index: 230;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.adj {
+  width: 100%;
+  max-width: 340px;
+  max-height: 76vh;
+  background: var(--card);
+  border-radius: var(--r-xl);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.adj-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 0;
+}
+
+.adj-title {
+  font-size: 15.5px;
+  font-weight: 600;
+}
+
+.adj-x {
+  color: var(--ink-3);
+  font-size: 16px;
+}
+
+.adj-sub {
+  padding: 6px 16px 12px;
+  font-size: 12.5px;
+  color: var(--ink-3);
+  line-height: 1.5;
+  border-bottom: 1px solid var(--line);
+}
+
+.adj-body {
+  overflow-y: auto;
+  padding: 4px 10px 12px;
+}
+
+.adj-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 6px;
+  border-bottom: 1px solid var(--line);
+}
+
+.adj-row:last-child {
+  border-bottom: none;
+}
+
+.adj-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.adj-name {
+  font-size: 14.5px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adj-info {
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+
+.adj-go {
+  flex: none;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 15px;
+  background: var(--brand-soft);
+  color: var(--brand-1);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.adj-go:disabled {
+  background: var(--surface-3);
+  color: var(--ink-4);
+  font-weight: 400;
 }
 </style>

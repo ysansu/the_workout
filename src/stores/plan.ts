@@ -266,6 +266,28 @@ export const usePlanStore = defineStore('plan', () => {
     updateDay(planId, dayId, { rest: rest || undefined })
   }
 
+  /**
+   * 手动把轮次挪到指定的训练日 —— 「今天就从这一天开始」。
+   *
+   * 用途：漏练之后重新对表。比如计划是 胸 / 腿 / 背 三天一轮，
+   * 该练胸的那天没练、今天轮到了腿，用这个把轮次拨回胸；
+   * 练完胸之后会自动继续往下走（dayIndex 已经对齐，advanceDay 照常推进）。
+   *
+   * 按周模式不适用 —— 那种排布由星期决定，没有「轮次」可拨。
+   */
+  function setCurrentDay(dayId: string) {
+    if (!active.value || !activePlan.value) return
+    const days = activePlan.value.days
+    const i = days.findIndex((d) => d.id === dayId)
+    if (i < 0) return
+    active.value = {
+      ...active.value,
+      dayIndex: i,
+      // 生效日口径跟 advanceDay 保持一致
+      since: isRestDay(days[i]) ? tomorrowKey() : todayKey(),
+    }
+  }
+
   /** 按周模式下，某个星期几是否已被占用 */
   function isWeekdayTaken(planId: string, weekday: number): boolean {
     const p = getPlanById(planId)
@@ -295,6 +317,7 @@ export const usePlanStore = defineStore('plan', () => {
     copyDay,
     setSchedule,
     setDayRest,
+    setCurrentDay,
     isWeekdayTaken,
   }
 })
