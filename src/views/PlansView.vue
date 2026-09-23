@@ -1,18 +1,17 @@
 <template>
   <div class="page">
-    <TrainTabs current="plans">
-      <template #action>
+    <TrainTabs current="plans" />
+
+    <div class="body">
+      <div class="sec-row">
+        <h2 class="sec">我的计划</h2>
         <button class="create" @click="$router.push('/plans/new/custom')">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
             <path d="M12 5v14M5 12h14" />
           </svg>
           创建计划
         </button>
-      </template>
-    </TrainTabs>
-
-    <div class="body">
-      <h2 class="sec">我的计划</h2>
+      </div>
 
       <div v-if="!ownPlans.length" class="none">
         <p>还没有自建计划</p>
@@ -144,7 +143,17 @@ function onSheetSelect(key: string) {
   padding: 6px 14px 30px;
 }
 
+/* 标题和「创建计划」放同一行 —— 放顶栏右侧在窄屏上会被挤到换行 */
+.sec-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 2px 10px;
+}
+
 .create {
+  flex: none;
   display: flex;
   align-items: center;
   gap: 3px;
@@ -154,6 +163,7 @@ function onSheetSelect(key: string) {
   background: var(--surface-3);
   color: var(--ink-2);
   font-size: 12.5px;
+  white-space: nowrap;
 }
 
 .create svg {
@@ -164,7 +174,10 @@ function onSheetSelect(key: string) {
 .sec {
   font-size: 15px;
   font-weight: 600;
-  padding: 14px 2px 10px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .none {

@@ -3,9 +3,10 @@
     <div class="page-head">
       <div class="back" @click="$router.back()">‹</div>
       <h1>{{ ex.name }}</h1>
-      <div class="sub">{{ ex.en }}</div>
+      <div v-if="ex.en" class="sub">{{ ex.en }}</div>
       <div class="tags">
-        <span class="wt">{{ ex.primary.join(' / ') }}</span>
+        <!-- primary 为空时（老的自建动作）不要渲染空标签，否则会出现一个看不出内容的空白胶囊 -->
+        <span v-if="ex.primary?.length" class="wt">{{ ex.primary.join(' / ') }}</span>
         <span v-for="e in ex.equipment" :key="e" class="wt">{{ EQUIPMENT_LABEL[e] }}</span>
       </div>
     </div>
