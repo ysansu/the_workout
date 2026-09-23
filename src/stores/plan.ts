@@ -19,6 +19,12 @@ interface ActivePlan {
    * 练三休一会永远卡在休息日上。
    */
   since?: string
+  /**
+   * 今天被「调整计划顺序」手动拨过轮次的日期。等于今天时，
+   * 首页要优先显示拨到的那一天 —— 否则会被
+   * 「今天练过就固定显示练过那天」的规则压掉，改完看不到任何变化。
+   */
+  manualDate?: string
 }
 
 /** 明天（本地日期）。用 setDate 而不是加毫秒，跨时区/夏令时都稳 */
@@ -87,6 +93,12 @@ export const usePlanStore = defineStore('plan', () => {
   /** 今天轮到的是不是休息日 */
   const onRestDay = computed(() => isRestDay(currentDay.value))
 
+  /**
+   * 今天是否手动拨过轮次（且还没把拨到的那天练掉）。
+   * 首页要靠它决定「显示哪一天」：手动选择优先于「今天练过的那天」。
+   */
+  const manuallySetToday = computed(() => active.value?.manualDate === todayKey())
+
   function activate(planId: string) {
     active.value = { planId, dayIndex: 0, since: todayKey() }
   }
@@ -108,6 +120,9 @@ export const usePlanStore = defineStore('plan', () => {
       // 落点是休息日时，生效日期写「明天」——休息日占的是下一个自然日。
       // 写成今天的话，刚练完的当晚就把休息日消耗掉了，第二天直接跳到训练日。
       since: isRestDay(days[next]) ? tomorrowKey() : todayKey(),
+      // 这一天已经练掉了，手动拨轮次的使命结束 ——
+      // 不清的话首页会一直优先显示「拨到的那天」，看不到「今日已完成」
+      manualDate: undefined,
     }
   }
 
@@ -133,6 +148,10 @@ export const usePlanStore = defineStore('plan', () => {
     if (!since) {
       active.value = { ...active.value, since: today }
       return
+    }
+    // 手动拨轮次的标记只对当天有效，跨天就作废
+    if (active.value.manualDate && active.value.manualDate !== today) {
+      active.value = { ...active.value, manualDate: undefined }
     }
     if (since >= today) return
 
@@ -285,6 +304,8 @@ export const usePlanStore = defineStore('plan', () => {
       dayIndex: i,
       // 生效日口径跟 advanceDay 保持一致
       since: isRestDay(days[i]) ? tomorrowKey() : todayKey(),
+      // 标记「今天被手动拨过」，首页要优先显示这一天
+      manualDate: todayKey(),
     }
   }
 
@@ -301,6 +322,7 @@ export const usePlanStore = defineStore('plan', () => {
     activePlan,
     currentDay,
     onRestDay,
+    manuallySetToday,
     getPlanById,
     activate,
     deactivate,

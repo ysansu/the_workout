@@ -149,10 +149,10 @@
             <button
               v-if="!d.rest && !isWeeklyPlan"
               class="adj-go"
-              :disabled="d.id === currentDayId"
+              :disabled="d.id === shownDayId"
               @click="startFromDay(d.id)"
             >
-              {{ d.id === currentDayId ? '已是今天' : '从今日开始' }}
+              {{ d.id === shownDayId ? '已是今天' : '从今日开始' }}
             </button>
           </div>
         </div>
@@ -233,8 +233,19 @@ const todayTrainedDay = computed<PlanDay | null>(() => {
   return p.days.find((d) => d.id === ids[0]) ?? p.days.find((d) => ids.includes(d.id)) ?? null
 })
 
-/** 卡片展示哪一天：今天练过就展示练过的那天，否则展示轮到的那天 */
-const shownDay = computed<PlanDay | null>(() => todayTrainedDay.value ?? day.value)
+/**
+ * 卡片展示哪一天。
+ *
+ * 默认「今天练过就展示练过的那天」（练完的当晚不该跳去显示明天）。
+ * 但今天用「调整计划顺序」手动拨过轮次时，以手动选择为准 ——
+ * 否则轮次虽然拨过去了，首页还是被上面那条规则占着，看起来像没生效。
+ */
+const shownDay = computed<PlanDay | null>(() => {
+  const trained = todayTrainedDay.value
+  const cur = day.value
+  if (planStore.manuallySetToday && cur && trained?.id !== cur.id) return cur
+  return trained ?? cur
+})
 
 const hasPlan = computed(() => !!planStore.activePlan?.days.length)
 
@@ -327,7 +338,8 @@ function onEndConfirm() {
 const adjustOpen = ref(false)
 
 const planDays = computed<PlanDay[]>(() => planStore.activePlan?.days ?? [])
-const currentDayId = computed(() => planStore.currentDay?.id ?? '')
+/** 用「首页正在显示的那天」做标记，保证弹层和卡片不会各说各话 */
+const shownDayId = computed(() => shownDay.value?.id ?? '')
 const isWeeklyPlan = computed(() => planStore.activePlan?.schedule === 'weekly')
 
 /** 今天就从这一天开始：把轮次拨过去，首页立刻换成这一天 */
