@@ -796,7 +796,10 @@ function doAbandon() {
   background: var(--card);
   box-shadow: 0 0 0 1px var(--line-2);
   display: flex;
-  align-items: baseline;
+  /* 注意：这里不能用 baseline —— 本格是固定 38px 高，
+     基线对齐只会把那一行文字顶到格子的顶部（表现为「字靠上」）。
+     数值和单位整体居中即可。 */
+  align-items: center;
   justify-content: center;
   gap: 3px;
 }
@@ -810,11 +813,12 @@ function doAbandon() {
 .val small {
   font-size: 11px;
   color: var(--ink-3);
+  /* 光学微调：单位跟着数字的基线坐下去一点，不要浮在中间 */
+  transform: translateY(1px);
 }
 
 /* 力竭：固定文案，不可点 */
 .val.static {
-  align-items: center;
   color: var(--brand-1);
   font-size: 15px;
   font-weight: 700;
