@@ -20,12 +20,8 @@
 
     <ConfirmDialog
       :visible="!!askingDelete"
-      :title="deleteIsBuiltin ? '确定删除这个内置动作？' : '确定删除这个动作？'"
-      :message="
-        deleteIsBuiltin
-          ? '删除后它不再出现在动作库里，已记录的训练不受影响。「设置 → 数据」里可以一键恢复全部内置动作。'
-          : '删除后不可恢复，已记录的训练不受影响。'
-      "
+      title="确定删除这个动作？"
+      message="删除后它不再出现在动作库里。已经排进计划的地方不受影响，还是正常显示动作名。「设置 → 数据」里可以恢复。"
       confirm-text="删除"
       cancel-text="取消"
       danger
@@ -67,8 +63,6 @@ const menuItems = [
     icon: ['M4 7h16', 'M9.5 7V4.8h5V7', 'M6.5 7l.9 12.2h9.2L17.5 7', 'M10.5 10.5v6M13.5 10.5v6'],
   },
 ]
-
-const deleteIsBuiltin = computed(() => !!askingDelete.value && store.isBuiltin(askingDelete.value))
 
 function openMenu(id: string) {
   menuFor.value = id

@@ -51,14 +51,17 @@ export const useExerciseStore = defineStore('exercise', () => {
   watch(custom, (v) => registerCustom(v), { deep: true, immediate: false })
 
   /**
-   * 内置 + 自建。
-   * 自建的排前面；被自建覆盖过的内置、以及被删掉的内置都不再出现在列表里。
-   * （注册表 rebuild 时自建在前，同 id 的自建会盖掉内置，两边口径一致）
+   * 内置 + 自建，两边都要按隐藏名单过滤。
+   * 注意：隐藏的**自建**动作仍然留在 custom 里（只是不进这个列表），
+   * 这样已计划里引用到它的地方还能解析出名称和缩略图，不会变成「未知动作」。
    */
   const list = computed<Exercise[]>(() => {
-    const overridden = new Set(custom.value.map((e) => e.id))
     const hidden = new Set(hiddenIds.value)
-    return [...custom.value, ...builtin.filter((e) => !overridden.has(e.id) && !hidden.has(e.id))]
+    const overridden = new Set(custom.value.map((e) => e.id))
+    return [
+      ...custom.value.filter((e) => !hidden.has(e.id)),
+      ...builtin.filter((e) => !overridden.has(e.id) && !hidden.has(e.id)),
+    ]
   })
 
   const mine = computed<Exercise[]>(() => custom.value)
@@ -67,7 +70,7 @@ export const useExerciseStore = defineStore('exercise', () => {
     favorites.value.map((id) => list.value.find((e) => e.id === id)).filter(Boolean) as Exercise[],
   )
 
-  /** 删掉的内置动作数量，>0 时设置页给一个一键恢复 */
+  /** 删掉的动作数量，>0 时设置页给一个一键恢复 */
   const hiddenCount = computed(() => hiddenIds.value.length)
 
   function isFavorite(id: string): boolean {
@@ -101,22 +104,23 @@ export const useExerciseStore = defineStore('exercise', () => {
     custom.value = [{ ...base, ...patch, id, custom: true }, ...custom.value]
   }
 
-  /** 删除 = 从动作库里彻底消失：自建直接删，内置记进隐藏名单 */
+  /**
+   * 删除 = 从动作库里拿掉，但**不销毁数据**，统一记进隐藏名单。
+   *
+   * 内置动作本来就没法真删（数据是打包进来的），只能记名单；
+   * 自建动作以前是真删，结果计划里引用它的地方全变成「未知动作」——
+   * 用户想表达的是「我不想在动作库里看到它」，不是「把我计划里的动作也搞坏」。
+   * 现在两边一致：列表里不显示，已有引用照常解析出名称和缩略图。
+   * 误删了可以在「设置 → 数据」里一键全部恢复。
+   */
   function removeExercise(id: string) {
-    custom.value = custom.value.filter((e) => e.id !== id)
     favorites.value = favorites.value.filter((x) => x !== id)
-    if (builtin.some((e) => e.id === id) && !hiddenIds.value.includes(id)) {
-      hiddenIds.value = [...hiddenIds.value, id]
-    }
+    if (!hiddenIds.value.includes(id)) hiddenIds.value = [...hiddenIds.value, id]
   }
 
-  /** 把删掉的内置动作全部找回来 */
-  function restoreBuiltins() {
+  /** 把删掉的动作全部找回来（内置和自建都包括） */
+  function restoreRemoved() {
     hiddenIds.value = []
-  }
-
-  function isBuiltin(id: string): boolean {
-    return builtin.some((e) => e.id === id)
   }
 
   /** 按器械过滤：只保留用户器材做得到的动作 */
@@ -145,8 +149,7 @@ export const useExerciseStore = defineStore('exercise', () => {
     addCustom,
     saveExercise,
     removeExercise,
-    restoreBuiltins,
-    isBuiltin,
+    restoreRemoved,
     filterByEquipment,
   }
 })

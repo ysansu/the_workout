@@ -102,12 +102,8 @@
 
     <ConfirmDialog
       :visible="askingDelete"
-      :title="isBuiltinExercise ? '确定删除这个内置动作？' : '确定删除这个动作？'"
-      :message="
-        isBuiltinExercise
-          ? '删除后它不再出现在动作库里，已记录的训练不受影响。可以在「设置 → 数据」里一键恢复全部内置动作。'
-          : '删除后不可恢复，已记录的训练不受影响。'
-      "
+      title="确定删除这个动作？"
+      message="删除后它不再出现在动作库里。已经排进计划的地方不受影响，还是正常显示动作名。「设置 → 数据」里可以恢复。"
       confirm-text="删除"
       cancel-text="取消"
       danger
@@ -151,9 +147,6 @@ const EQUIP_KEYS: Equipment[] = [
 const covers = ref<(string | null)[]>([null, null])
 
 const askingDelete = ref(false)
-
-/** 内置动作删除后只是隐藏，文案要跟自建动作区分开 */
-const isBuiltinExercise = computed(() => store.isBuiltin(editId.value))
 
 const form = reactive({
   name: '',

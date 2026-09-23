@@ -44,10 +44,10 @@
         <button
           v-if="exerciseStore.hiddenCount"
           class="restore-row"
-          @click="doRestoreBuiltins"
+          @click="exerciseStore.restoreRemoved()"
         >
           <span>
-            恢复已删除的内置动作
+            恢复已删除的动作
             <small>{{ exerciseStore.hiddenCount }} 个</small>
           </span>
           <span class="chev">›</span>
@@ -146,10 +146,6 @@ function confirmClear() {
   askingClear.value = false
   clearAll()
   location.reload()
-}
-
-function doRestoreBuiltins() {
-  exerciseStore.restoreBuiltins()
 }
 </script>
 
