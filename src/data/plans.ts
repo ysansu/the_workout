@@ -15,7 +15,7 @@ export const seedPlans: Plan[] = [
   {
     id: 'starter',
     name: '上下肢三分化',
-    desc: '上肢推 / 上肢拉 / 下肢与核心三条循环，一期 3 练。先保动作质量，再谈重量。',
+    desc: '上肢推 / 上肢拉 / 下肢与核心三条循环，第 4 天休息（练三休一）。先保动作质量，再谈重量。',
     goal: 'muscle',
     level: 'beginner',
     schedule: 'cycle',
@@ -64,6 +64,12 @@ export const seedPlans: Plan[] = [
           { exerciseId: 'dead-bug', sets: 3, unit: 'reps', strength: 10, rest: 45, note: '每侧；后腰全程压紧地面' },
           { exerciseId: 'standing-calf-raise', sets: 3, unit: 'reps', strength: 15, rest: 30 },
         ],
+      },
+      {
+        id: 'starter-d',
+        name: 'D · 休息日',
+        rest: true,
+        items: [],
       },
     ],
   },

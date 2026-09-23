@@ -9,36 +9,43 @@
     </header>
 
     <div class="body">
-      <div class="two">
-        <div class="card mini">
-          <div class="k"><i class="dot red" />预计总训练时间</div>
-          <div class="v">{{ minutes }}<small>分钟</small></div>
-          <div class="note">建议在预计时间左右完成</div>
-        </div>
-        <div class="card mini">
-          <div class="k"><i class="dot blue" />需要的器械</div>
-          <div class="eq">{{ equipmentText || '徒手' }}</div>
-        </div>
+      <div v-if="isRest" class="card">
+        <div class="card-title"><span>今天是休息日</span></div>
+        <p class="hint">这个计划今天不安排训练，回去好好休息吧。</p>
       </div>
 
-      <div class="card">
-        <div class="card-title"><span>今日训练内容</span></div>
-        <div v-if="!items.length" class="empty-inline">这一天还没有动作，先去计划里加几个吧</div>
-        <ul v-else class="list">
-          <li v-for="(it, i) in items" :key="i" class="item">
-            <ExThumb :id="it.exerciseId" :size="48" :radius="8" />
-            <div class="meta">
-              <div class="name">{{ name(it.exerciseId) }}</div>
-              <div class="sub2">{{ fmtPlanItemFull(it) }}</div>
-            </div>
-            <span class="sets">{{ it.sets }}组</span>
-          </li>
-        </ul>
-      </div>
+      <template v-else>
+        <div class="two">
+          <div class="card mini">
+            <div class="k"><i class="dot red" />预计总训练时间</div>
+            <div class="v">{{ minutes }}<small>分钟</small></div>
+            <div class="note">建议在预计时间左右完成</div>
+          </div>
+          <div class="card mini">
+            <div class="k"><i class="dot blue" />需要的器械</div>
+            <div class="eq">{{ equipmentText || '徒手' }}</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title"><span>今日训练内容</span></div>
+          <div v-if="!items.length" class="empty-inline">这一天还没有动作，先去计划里加几个吧</div>
+          <ul v-else class="list">
+            <li v-for="(it, i) in items" :key="i" class="item">
+              <ExThumb :id="it.exerciseId" :size="48" :radius="8" />
+              <div class="meta">
+                <div class="name">{{ name(it.exerciseId) }}</div>
+                <div class="sub2">{{ fmtPlanItemFull(it) }}</div>
+              </div>
+              <span class="sets">{{ it.sets }}组</span>
+            </li>
+          </ul>
+        </div>
+      </template>
 
     </div>
 
-    <footer class="bottom">
+    <footer v-if="!isRest" class="bottom">
       <button class="btn btn-primary btn-block" :disabled="!items.length" @click="begin">
         开始训练
       </button>
@@ -76,6 +83,9 @@ const day = computed<PlanDay | null>(() => {
   return planStore.currentDay
 })
 const items = computed(() => day.value?.items ?? [])
+
+/** 休息日不该走到这里（首页不会给入口），真跳进来了就只显示提示、不给开练 */
+const isRest = computed(() => !!day.value?.rest)
 
 const totalSec = computed(() => items.value.reduce((n, it) => n + planItemSeconds(it), 0))
 const minutes = computed(() => Math.max(1, Math.round(totalSec.value / 60)))

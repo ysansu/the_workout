@@ -94,8 +94,10 @@
           </button>
         </div>
 
-        <div class="d-stat">{{ d.items.length }} 个动作</div>
-        <div v-if="d.items.length" class="d-sum">
+        <div v-if="d.rest" class="d-stat rest-tag">休息日</div>
+        <div v-else class="d-stat">{{ d.items.length }} 个动作</div>
+        <div v-if="d.rest" class="d-sum">这一天不安排训练，轮到它时首页会提示休息</div>
+        <div v-else-if="d.items.length" class="d-sum">
           {{ d.items.map((it) => nameOf(it.exerciseId)).join('，') }}
         </div>
         <div v-else class="d-sum placeholder">请点击本训练日添加动作</div>
@@ -129,7 +131,7 @@
     <ActionSheet
       :visible="!!sheetDay"
       :title="sheetDay?.name"
-      :items="daySheetItems"
+      :items="dayMenuItems"
       @close="sheetDay = null"
       @select="onDaySheet"
     />
@@ -293,6 +295,20 @@ const daySheetItems: SheetItem[] = [
   { key: 'delete', label: '删除训练日', danger: true, icon: ['M4 7h16', 'M9 7V5h6v2', 'M6.5 7l1 12.5h9L17.5 7'] },
 ]
 
+/**
+ * 训练日菜单。休息日和训练日能做的事不一样：
+ * 休息日没有「立即开练」，但多一个「取消休息日」。
+ */
+const dayMenuItems = computed<SheetItem[]>(() => {
+  const d = sheetDay.value
+  const toggle: SheetItem = d?.rest
+    ? { key: 'rest', label: '取消休息日', icon: ['M12 3v2M12 19v2M5 12H3M21 12h-2', 'M18.4 5.6l-1.4 1.4M7 17l-1.4 1.4M5.6 5.6L7 7M17 17l1.4 1.4'] }
+    : { key: 'rest', label: '改为休息日', icon: ['M12 3a9 9 0 109 9', 'M12 7v5l3 2'] }
+  return d?.rest
+    ? [daySheetItems[0], daySheetItems[1], toggle, daySheetItems[2], daySheetItems[3], daySheetItems[4], daySheetItems[6]]
+    : [...daySheetItems.slice(0, 5), toggle, daySheetItems[5], daySheetItems[6]]
+})
+
 function openDaySheet(d: PlanDay) {
   sheetDay.value = d
 }
@@ -308,6 +324,7 @@ function onDaySheet(key: string) {
   else if (key === 'up') planStore.moveDay(pid, d.id, -1)
   else if (key === 'down') planStore.moveDay(pid, d.id, 1)
   else if (key === 'copy') planStore.copyDay(pid, d.id)
+  else if (key === 'rest') planStore.setDayRest(pid, d.id, !d.rest)
   else if (key === 'run') startNow(d)
   else if (key === 'delete') {
     if (!window.confirm(`确定删除训练日「${d.name}」？`)) return
@@ -318,6 +335,7 @@ function onDaySheet(key: string) {
 function startNow(d: PlanDay) {
   const p = plan.value
   if (!p) return
+  if (d.rest) return // 休息日不开练
   // 还没在执行这个计划才激活；已在执行就别重复 activate，否则轮次会被重置回第 1 天
   if (planStore.active?.planId !== p.id) planStore.activate(p.id)
   router.push({ path: '/train/start', query: { day: d.id } })
@@ -558,6 +576,16 @@ function leave() {
   font-size: 12px;
   color: var(--ink-3);
   margin-top: 10px;
+}
+
+/* 休息日：给出一个明确标记，别只显示「0 个动作」 */
+.d-stat.rest-tag {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 8px;
+  background: var(--surface-3);
+  color: var(--ink-2);
+  font-weight: 600;
 }
 
 .d-sum {

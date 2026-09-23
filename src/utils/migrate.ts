@@ -58,12 +58,15 @@ export function migratePlanItem(old: Loose): PlanItem {
 
 /** 旧版 PlanDay → 新版（旧版按 index 顺序，即新版 cycle 模式） */
 export function migratePlanDay(old: Loose, i: number): PlanDay {
-  return {
+  const day: PlanDay = {
     id: old.id ?? `d${i}`,
     name: old.name ?? `第 ${i + 1} 天`,
     weekday: old.weekday,
     items: Array.isArray(old.items) ? old.items.map(migratePlanItem) : [],
   }
+  // 这里是重建对象，新增字段必须显式带过来，否则刷新一次就丢了
+  if (old.rest) day.rest = true
+  return day
 }
 
 /** 旧版 Plan → 新版（旧版一律按周期模式排布） */

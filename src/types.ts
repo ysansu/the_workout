@@ -120,6 +120,13 @@ export interface PlanDay {
   /** weekly 模式：1=周一 … 7=周日；cycle 模式：留空，按数组顺序即第 1/2/3 天 */
   weekday?: number
   items: PlanItem[]
+  /**
+   * 休息日。
+   * 它仍是 days 数组里的一个正常条目 —— 这样「练三休一」（cycle 第 4 天休息）
+   * 和「周日休息」（weekly 绑定到周日）两种排布都能直接表达，不用额外结构。
+   * 生效时首页显示「今天是休息日」，不进训练流程。
+   */
+  rest?: boolean
 }
 
 /** 计划的排布方式 */

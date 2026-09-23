@@ -24,8 +24,20 @@
         <button class="btn btn-primary btn-block" @click="$router.push('/train/run')">继续训练</button>
       </div>
 
+      <!-- 休息日 -->
+      <div v-if="restToday && !workoutStore.hasCurrent" class="card rest">
+        <div class="card-title">
+          <span>今天是休息日</span>
+        </div>
+        <p class="hint">这个计划今天不安排训练，好好恢复。</p>
+        <div class="from-plan">
+          来自「{{ planStore.activePlan?.name }}」
+          <button class="link" @click="askingEnd = true">结束该计划</button>
+        </div>
+      </div>
+
       <!-- 今日清单 -->
-      <div v-if="shownDay && !workoutStore.hasCurrent" class="card" :class="{ finished: dayDone }">
+      <div v-if="shownDay && !restToday && !workoutStore.hasCurrent" class="card" :class="{ finished: dayDone }">
         <div class="card-title">
           <span class="title-l">
             <span class="day-name">{{ shownDay.name }}</span>
@@ -84,7 +96,7 @@
       </div>
 
       <!-- 没有执行中的计划 -->
-      <div v-if="!shownDay && !workoutStore.hasCurrent" class="card">
+      <div v-if="!hasPlan && !workoutStore.hasCurrent" class="card">
         <div class="card-title"><span>还没有执行中的计划</span></div>
         <p class="hint">从计划库挑一个开始，或先自由训练。</p>
         <div class="btns">
@@ -191,6 +203,19 @@ const todayTrainedDay = computed<PlanDay | null>(() => {
 /** 卡片展示哪一天：今天练过就展示练过的那天，否则展示轮到的那天 */
 const shownDay = computed<PlanDay | null>(() => todayTrainedDay.value ?? day.value)
 
+const hasPlan = computed(() => !!planStore.activePlan?.days.length)
+
+/**
+ * 今天算不算「休息日」。
+ * 包括两种：① 轮到的这一天被标成了休息日；② 按周模式下今天没排任何训练。
+ *
+ * 今天已经练过就不算 —— 练完的当晚应该看到自己练的那天（含「今日已完成」），
+ * 而不是一进门就被告知「今天是休息日」。
+ */
+const restToday = computed(
+  () => hasPlan.value && !todayTrainedDay.value && (planStore.onRestDay || !day.value),
+)
+
 const shownItems = computed<PlanItem[]>(() => shownDay.value?.items ?? [])
 
 const estimateMin = computed(() => {
@@ -292,6 +317,11 @@ function startFree() {
 .running {
   background: var(--brand-soft);
   border: 1px solid var(--brand-soft-2);
+}
+
+/* 休息日：中性灰底，跟「训练进行中」的紫色卡区分开，也不抢眼 */
+.rest {
+  background: var(--surface-2);
 }
 
 .run-row {
